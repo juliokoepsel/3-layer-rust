@@ -2,7 +2,7 @@
 struct Carro {
     placa: String,
     horas: i32,
-    preco_hora: i32,
+    preco_hora: f32,
 }
 impl Carro {
     fn new(placa: String, horas: i32, preco_hora: f32) -> Carro {
@@ -12,114 +12,136 @@ impl Carro {
             preco_hora: preco_hora,
         }
     }
-    fn calcular_horas(&self) -> f32 {
-        return &self.horas * &self.preco_hora;
+    fn calcular_preco(&self) -> f32 {
+        return self.horas as f32 * &self.preco_hora;
+    }
+    fn to_string(&self) -> String {
+        return format!("Placa: {}, Horas: {}, Preço da Hora: {}, Valor Total: {}", &self.placa, &self.horas, &self.preco_hora, &self.calcular_preco());
     }
 }
 
 //Controller Layer
 struct Controller;
 impl Controller {
-    fn insert(name: String, num1: i32, num2: i32) -> Model {
-        //TODO: Check if name.len() > 0
-        return Model::new(name, num1, num2);
-    }
-    fn list(list: Vec<Model>, name: String) -> Model {
-        /*
-        if list.len() > 0 {
-            for i in list {
-                if i.name == name {
-                    return i;
-                }
-            }
-            panic!("ERROR: NO MODEL FOUND WITH NAME {}!", name);
+    fn insert(lista: &mut Vec<Carro>, placa: String, horas: i32, preco_hora: f32) -> bool {
+        if placa.len() > 0 && horas > 0 && preco_hora > 0.0 {
+            lista.push(Carro::new(placa, horas, preco_hora));
+            return true;
         } else {
-            panic!("ERROR: EMPTY ARRAY!");
+            return false;
         }
-        */
-
     }
-    fn remove(model: Model) {
-
+    fn list(lista: &mut Vec<Carro>) -> bool {
+        if lista.len() > 0 {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    fn remove(lista: &mut Vec<Carro>, placa: String) -> bool {
+        if placa.len() > 0 && lista.len() > 0 {
+            let index = lista.iter().position(|x| x.placa == placa).unwrap();
+            lista.remove(index);
+            return true;
+        } else {
+            return false;
+        }
     }
 }
-
-
 
 //View Layer
 struct View;
 impl View {
-    /*
-    fn add(mut list: Vec<Model>) {
-        println!("VIEW_ADD= ");
-
-        println!("Enter name:");
-        let mut name = String::new();
-        io::stdin()
-            .read_line(&mut name)
-            .expect("Failed to read line");
-        
-        println!("Enter num1:");
-        let mut num1 = String::new();
-        io::stdin()
-            .read_line(&mut num1)
-            .expect("Failed to read line");
-        
-        println!("Enter num2:");
-        let mut num2 = String::new();
-        io::stdin()
-            .read_line(&mut num2)
-            .expect("Failed to read line");
-        
-        let model = Model::new(name.trim().parse::<String>().unwrap(), num1.trim().parse::<i32>().unwrap(), num2.trim().parse::<i32>().unwrap());
-
-        list.push(Controller::create(name.trim().parse::<String>().unwrap(), num1.trim().parse::<i32>().unwrap(), num2.trim().parse::<i32>().unwrap()));
-        println!("VIEW_ADD_RESULT= Name: {}, Num1: {}, Num2: {}", list[0].name, list[0].num1, list[0].num2);
-    }*/
-    /*
-    fn change() {}*/
-    /*
-    fn remove() {}*/
-    /*
-    fn calculate(list: Vec<Model>) {
-        println!("VIEW_CALCULATE= ");
-
-        println!("Enter name:");
-        let mut name = String::new();
-        io::stdin()
-            .read_line(&mut name)
-            .expect("Failed to read line");
-        
-        println!("VIEW_CALCULATE_RESULT= {}", Controller::calculate(list, name));
-    }*/
-    fn menu() {
-        let mut num: i32 = 0;
+    fn menu(lista: &mut Vec<Carro>) {
         loop {
-            println!("MENU: (1 = Inserir, 2 = Listar, 3 = Remover, 4 = Sair)");
+            println!("----------");
+
+            println!("Menu Estacionamento: (1 = Inserir, 2 = Listar, 3 = Remover, 4 = Sair)");
             let mut entrada = String::new();
             io::stdin()
                 .read_line(&mut entrada)
                 .expect("Erro ao ler a linha");
-            num = entrada.parse::<i32>().unwrap();
-            match num{
-                4=>break;
+
+            let num = entrada.parse::<i32>().unwrap();
+            match num {
+                1=>View::insert(lista),
+                2=>View::list(lista),
+                3=>View::remove(lista),
+                4=>break,
+                i32::MIN..=0_i32 | 5_i32..=i32::MAX => println!("Comando desconhecido."),
             }
         }
     }
+    fn insert(lista: &mut Vec<Carro>) {
+        println!("----------");
+        println!("Inserir carro.");
+
+        println!("Placa do carro:");
+        let mut placa = String::new();
+        io::stdin()
+            .read_line(&mut placa)
+            .expect("Erro ao ler a linha");
+        let placa = placa.trim().parse::<String>().unwrap();
+        
+        println!("Quantidade de horas:");
+        let mut horas = String::new();
+        io::stdin()
+            .read_line(&mut horas)
+            .expect("Erro ao ler a linha");
+        let horas = horas.trim().parse::<i32>().unwrap();
+        
+        println!("Preço da hora:");
+        let mut preco_hora = String::new();
+        io::stdin()
+            .read_line(&mut preco_hora)
+            .expect("Erro ao ler a linha");
+        let preco_hora = preco_hora.trim().parse::<f32>().unwrap();
+
+        if Controller::insert(lista, placa, horas, preco_hora) {
+            println!("Objeto inserido com sucesso!");
+        } else {
+            println!("Erro ao inserir objeto!");
+        }
+    }
+    fn list(lista: &mut Vec<Carro>) {
+        println!("----------");
+        println!("Listar carros.");
+
+        if Controller::list(lista) {
+            for elem in lista.iter() {
+                println!("{}", elem.to_string());
+            }
+        } else {
+            println!("A lista de objetos está vazia!");
+        }
+    }
+    fn remove(lista: &mut Vec<Carro>) {
+        println!("----------");
+        println!("Remover carro.");
+
+        println!("Placa do carro:");
+        let mut placa = String::new();
+        io::stdin()
+            .read_line(&mut placa)
+            .expect("Erro ao ler a linha");
+        let placa = placa.trim().parse::<String>().unwrap();
+
+        if Controller::remove(lista, placa) {
+            println!("Objeto removido com sucesso!");
+        } else {
+            println!("Erro ao remover objeto!");
+        }
+    }
 }
-
-
 
 //Main
 use std::io;
 fn main() {
     println!("START");
-    println!("ESTACIONAMENTO:");
     
-    let list: Vec<Carro> = Vec::new();
+    let mut lista: Vec<Carro> = Vec::new();
 
-    View::add(list);
-    //View::calculate(list);
+    View::menu(&mut lista);
 
     println!("END");
 }
