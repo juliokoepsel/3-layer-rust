@@ -57,13 +57,45 @@ impl Controller {
     }
     fn save(lista: &mut Vec<Carro>) -> bool {
         if lista.len() > 0 {
+            let mut dados = String::new();
+            for elem in lista.iter() {
+                dados = format!("{}\n{}", dados, elem.to_file());
+            }
+            dados = dados[1..dados.len()].to_string();
+
+            fs::write("lista.txt", dados).expect("Erro ao criar o arquivo");
+
             return true;
         } else {
             return false;
         }
     }
-    fn load(_lista: &mut Vec<Carro>) -> bool {
+    fn load(lista: &mut Vec<Carro>) -> bool {
         if std::path::Path::new("lista.txt").exists() {
+            let dados = fs::read_to_string("lista.txt").expect("Erro ao ler o arquivo");
+            let dados = dados.split("\n");
+            let mut dados = dados.collect::<Vec<&str>>();
+
+            while dados.len() > 3 {
+                let placa: String = dados[0].trim().parse().unwrap();
+                let horas: i32 = dados[1].trim().parse().expect("Erro: entrada não é i32");
+                let preco_hora: f32 = dados[2].trim().parse().expect("Erro: entrada não é f32");
+                if Controller::insert(lista, placa, horas, preco_hora) {
+                    println!("Objeto inserido com sucesso!");
+                } else {
+                    println!("Erro ao inserir objeto!");
+                }
+                dados = dados[3..dados.len()].to_vec();
+            }
+            let placa: String = dados[0].trim().parse().unwrap();
+            let horas: i32 = dados[1].trim().parse().expect("Erro: entrada não é i32");
+            let preco_hora: f32 = dados[2].trim().parse().expect("Erro: entrada não é f32");
+            if Controller::insert(lista, placa, horas, preco_hora) {
+                println!("Objeto inserido com sucesso!");
+            } else {
+                println!("Erro ao inserir objeto!");
+            }
+
             return true;
         } else {
             return false;
@@ -164,14 +196,6 @@ impl View {
         println!("Salvar lista.");
 
         if Controller::save(lista) {
-            let mut dados = String::new();
-            for elem in lista.iter() {
-                dados = format!("{}\n{}", dados, elem.to_file());
-            }
-            dados = dados[1..dados.len()].to_string();
-
-            fs::write("lista.txt", dados).expect("Erro ao criar o arquivo");
-
             println!("Lista salva com sucesso!");
         } else {
             println!("Erro ao salvar a lista!");
@@ -182,30 +206,6 @@ impl View {
         println!("Carregar lista.");
 
         if Controller::load(lista) {
-            let dados = fs::read_to_string("lista.txt").expect("Erro ao ler o arquivo");
-            let dados = dados.split("\n");
-            let mut dados = dados.collect::<Vec<&str>>();
-
-            while dados.len() > 3 {
-                let placa: String = dados[0].trim().parse().unwrap();
-                let horas: i32 = dados[1].trim().parse().expect("Erro: entrada não é i32");
-                let preco_hora: f32 = dados[2].trim().parse().expect("Erro: entrada não é f32");
-                if Controller::insert(lista, placa, horas, preco_hora) {
-                    println!("Objeto inserido com sucesso!");
-                } else {
-                    println!("Erro ao inserir objeto!");
-                }
-                dados = dados[3..dados.len()].to_vec();
-            }
-            let placa: String = dados[0].trim().parse().unwrap();
-            let horas: i32 = dados[1].trim().parse().expect("Erro: entrada não é i32");
-            let preco_hora: f32 = dados[2].trim().parse().expect("Erro: entrada não é f32");
-            if Controller::insert(lista, placa, horas, preco_hora) {
-                println!("Objeto inserido com sucesso!");
-            } else {
-                println!("Erro ao inserir objeto!");
-            }
-
             println!("Lista carregada com sucesso!");
         } else {
             println!("Erro ao carregar a lista!");
