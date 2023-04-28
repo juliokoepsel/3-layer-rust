@@ -1,12 +1,14 @@
 //Model Layer
 struct Carro {
+    id: i32,
     placa: String,
     horas: i32,
     preco_hora: f32,
 }
 impl Carro {
-    fn new(placa: String, horas: i32, preco_hora: f32) -> Carro {
+    fn new(id: i32, placa: String, horas: i32, preco_hora: f32) -> Carro {
         Carro{
+            id: id,
             placa: placa,
             horas: horas,
             preco_hora: preco_hora,
@@ -16,7 +18,10 @@ impl Carro {
         return self.horas as f32 * &self.preco_hora;
     }
     fn to_string(&self) -> String {
-        return format!("Placa: {}, Horas: {}, Preço da Hora: {}, Valor Total: {}", &self.placa, &self.horas, &self.preco_hora, &self.calcular_preco());
+        return format!("ID: {}, Placa: {}, Horas: {}, Preço da Hora: {}, Valor Total: {};", &self.id, &self.placa, &self.horas, &self.preco_hora, &self.calcular_preco());
+    }
+    fn to_file(&self) -> String {
+        return format!("{}\n{}\n{}", &self.placa, &self.horas, &self.preco_hora);
     }
 }
 
@@ -25,7 +30,8 @@ struct Controller;
 impl Controller {
     fn insert(lista: &mut Vec<Carro>, placa: String, horas: i32, preco_hora: f32) -> bool {
         if placa.len() > 0 && horas > 0 && preco_hora > 0.0 {
-            lista.push(Carro::new(placa, horas, preco_hora));
+            let id: i32 = 1 + lista.len() as i32;
+            lista.push(Carro::new(id, placa, horas, preco_hora));
             return true;
         } else {
             return false;
@@ -38,10 +44,26 @@ impl Controller {
             return false;
         }
     }
-    fn remove(lista: &mut Vec<Carro>, placa: String) -> bool {
-        if placa.len() > 0 && lista.len() > 0 {
-            let index = lista.iter().position(|x| x.placa == placa).unwrap();
-            lista.remove(index);
+    fn remove(lista: &mut Vec<Carro>, id: i32) -> bool {
+        if id > 0 && lista.len() > 0 {
+            let index = lista.iter_mut().position(|x| x.id == id).expect("Nenhum objeto foi encontrado com o ID informado");
+            lista[index].placa = format!("REMOVIDO");
+            lista[index].horas = 0;
+            lista[index].preco_hora = 0.0;
+            return true;
+        } else {
+            return false;
+        }
+    }
+    fn save(lista: &mut Vec<Carro>) -> bool {
+        if lista.len() > 0 {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    fn load(_lista: &mut Vec<Carro>) -> bool {
+        if std::path::Path::new("lista.txt").exists() {
             return true;
         } else {
             return false;
@@ -56,19 +78,22 @@ impl View {
         loop {
             println!("----------");
 
-            println!("Menu Estacionamento: (1 = Inserir, 2 = Listar, 3 = Remover, 4 = Sair)");
             let mut entrada = String::new();
+
+            println!("Menu Estacionamento: (1 = Inserir, 2 = Listar, 3 = Remover, 4 = Salvar, 5 = Carregar, 6 = Sair)");
             io::stdin()
                 .read_line(&mut entrada)
                 .expect("Erro ao ler a linha");
 
-            let num = entrada.parse::<i32>().unwrap();
+            let num: i32 = entrada.trim().parse().expect("Erro: entrada não é i32");
             match num {
                 1=>View::insert(lista),
                 2=>View::list(lista),
                 3=>View::remove(lista),
-                4=>break,
-                i32::MIN..=0_i32 | 5_i32..=i32::MAX => println!("Comando desconhecido."),
+                4=>View::save(lista),
+                5=>View::load(lista),
+                6=>break,
+                i32::MIN..=0_i32 | 7_i32..=i32::MAX => println!("Comando desconhecido."),
             }
         }
     }
@@ -76,26 +101,27 @@ impl View {
         println!("----------");
         println!("Inserir carro.");
 
+        let mut entrada = String::new();
+
         println!("Placa do carro:");
-        let mut placa = String::new();
         io::stdin()
-            .read_line(&mut placa)
+            .read_line(&mut entrada)
             .expect("Erro ao ler a linha");
-        let placa = placa.trim().parse::<String>().unwrap();
-        
+        let placa: String = entrada.trim().parse().unwrap();
+        entrada = String::new();
+
         println!("Quantidade de horas:");
-        let mut horas = String::new();
         io::stdin()
-            .read_line(&mut horas)
+            .read_line(&mut entrada)
             .expect("Erro ao ler a linha");
-        let horas = horas.trim().parse::<i32>().unwrap();
-        
+        let horas: i32 = entrada.trim().parse().expect("Erro: entrada não é i32");
+        entrada = String::new();
+
         println!("Preço da hora:");
-        let mut preco_hora = String::new();
         io::stdin()
-            .read_line(&mut preco_hora)
+            .read_line(&mut entrada)
             .expect("Erro ao ler a linha");
-        let preco_hora = preco_hora.trim().parse::<f32>().unwrap();
+        let preco_hora: f32 = entrada.trim().parse().expect("Erro: entrada não é f32");
 
         if Controller::insert(lista, placa, horas, preco_hora) {
             println!("Objeto inserido com sucesso!");
@@ -118,24 +144,78 @@ impl View {
     fn remove(lista: &mut Vec<Carro>) {
         println!("----------");
         println!("Remover carro.");
+        
+        let mut entrada = String::new();
 
-        println!("Placa do carro:");
-        let mut placa = String::new();
+        println!("Informe o ID:");
         io::stdin()
-            .read_line(&mut placa)
+            .read_line(&mut entrada)
             .expect("Erro ao ler a linha");
-        let placa = placa.trim().parse::<String>().unwrap();
+        let id: i32 = entrada.trim().parse().expect("Erro: entrada não é i32");
 
-        if Controller::remove(lista, placa) {
+        if Controller::remove(lista, id) {
             println!("Objeto removido com sucesso!");
         } else {
-            println!("Erro ao remover objeto!");
+            println!("Erro ao remover Objeto!");
+        }
+    }
+    fn save(lista: &mut Vec<Carro>) {
+        println!("----------");
+        println!("Salvar lista.");
+
+        if Controller::save(lista) {
+            let mut dados = String::new();
+            for elem in lista.iter() {
+                dados = format!("{}\n{}", dados, elem.to_file());
+            }
+            dados = dados[1..dados.len()].to_string();
+
+            fs::write("lista.txt", dados).expect("Erro ao criar o arquivo");
+
+            println!("Lista salva com sucesso!");
+        } else {
+            println!("Erro ao salvar a lista!");
+        }
+    }
+    fn load(lista: &mut Vec<Carro>) {
+        println!("----------");
+        println!("Carregar lista.");
+
+        if Controller::load(lista) {
+            let dados = fs::read_to_string("lista.txt").expect("Erro ao ler o arquivo");
+            let dados = dados.split("\n");
+            let mut dados = dados.collect::<Vec<&str>>();
+
+            while dados.len() > 3 {
+                let placa: String = dados[0].trim().parse().unwrap();
+                let horas: i32 = dados[1].trim().parse().expect("Erro: entrada não é i32");
+                let preco_hora: f32 = dados[2].trim().parse().expect("Erro: entrada não é f32");
+                if Controller::insert(lista, placa, horas, preco_hora) {
+                    println!("Objeto inserido com sucesso!");
+                } else {
+                    println!("Erro ao inserir objeto!");
+                }
+                dados = dados[3..dados.len()].to_vec();
+            }
+            let placa: String = dados[0].trim().parse().unwrap();
+            let horas: i32 = dados[1].trim().parse().expect("Erro: entrada não é i32");
+            let preco_hora: f32 = dados[2].trim().parse().expect("Erro: entrada não é f32");
+            if Controller::insert(lista, placa, horas, preco_hora) {
+                println!("Objeto inserido com sucesso!");
+            } else {
+                println!("Erro ao inserir objeto!");
+            }
+
+            println!("Lista carregada com sucesso!");
+        } else {
+            println!("Erro ao carregar a lista!");
         }
     }
 }
 
 //Main
 use std::io;
+use std::fs;
 fn main() {
     println!("START");
     
