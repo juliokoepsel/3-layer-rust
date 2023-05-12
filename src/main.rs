@@ -7,7 +7,7 @@ struct Carro {
 }
 impl Carro {
     fn new(id: i32, placa: String, horas: i32, preco_hora: f32) -> Carro {
-        Carro{
+        Carro {
             id: id,
             placa: placa,
             horas: horas,
@@ -18,7 +18,14 @@ impl Carro {
         return self.horas as f32 * &self.preco_hora;
     }
     fn to_string(&self) -> String {
-        return format!("ID: {}, Placa: {}, Horas: {}, Preço da Hora: {}, Valor Total: {};", &self.id, &self.placa, &self.horas, &self.preco_hora, &self.calcular_preco());
+        return format!(
+            "ID: {}, Placa: {}, Horas: {}, Preço da Hora: {}, Valor Total: {};",
+            &self.id,
+            &self.placa,
+            &self.horas,
+            &self.preco_hora,
+            &self.calcular_preco()
+        );
     }
     fn to_file(&self) -> String {
         return format!("{}\n{}\n{}", &self.placa, &self.horas, &self.preco_hora);
@@ -46,7 +53,10 @@ impl Controller {
     }
     fn remove(lista: &mut Vec<Carro>, id: i32) -> bool {
         if id > 0 && lista.len() > 0 {
-            let index = lista.iter_mut().position(|x| x.id == id).expect("Nenhum objeto foi encontrado com o ID informado");
+            let index = lista
+                .iter_mut()
+                .position(|x| x.id == id)
+                .expect("Nenhum objeto foi encontrado com o ID informado");
             lista[index].placa = format!("REMOVIDO");
             lista[index].horas = 0;
             lista[index].preco_hora = 0.0;
@@ -119,12 +129,12 @@ impl View {
 
             let num: i32 = entrada.trim().parse().expect("Erro: entrada não é i32");
             match num {
-                1=>View::insert(lista),
-                2=>View::list(lista),
-                3=>View::remove(lista),
-                4=>View::save(lista),
-                5=>View::load(lista),
-                6=>break,
+                1 => View::insert(lista),
+                2 => View::list(lista),
+                3 => View::remove(lista),
+                4 => View::save(lista),
+                5 => View::load(lista),
+                6 => break,
                 i32::MIN..=0_i32 | 7_i32..=i32::MAX => println!("Comando desconhecido."),
             }
         }
@@ -176,7 +186,7 @@ impl View {
     fn remove(lista: &mut Vec<Carro>) {
         println!("----------");
         println!("Remover carro.");
-        
+
         let mut entrada = String::new();
 
         println!("Informe o ID:");
@@ -214,11 +224,11 @@ impl View {
 }
 
 //Main
-use std::io;
 use std::fs;
+use std::io;
 fn main() {
     println!("START");
-    
+
     let mut lista: Vec<Carro> = Vec::new();
 
     View::menu(&mut lista);
